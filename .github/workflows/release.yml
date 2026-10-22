@@ -1,0 +1,75 @@
+name: Release
+
+# Push a tag such as v0.2.0 (or v0.2.0-beta.1 for a pre-release) to build, test and publish a release.
+# It can also be started by hand from the Actions tab: give the version and the tag is created on the chosen branch.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the v (for example 0.2.0 or 0.2.0-beta.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Work out version and tag
+        id: version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          $version = if ("${{ github.event_name }}" -eq "workflow_dispatch") { $env:INPUT_VERSION.Trim().TrimStart('v') } else { $env:REF_NAME.TrimStart('v') }
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "'$version' is not a semantic version like 1.2.3 or 1.2.3-beta.1" }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          "prerelease=$($version.Contains('-'))".ToLower() >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test Quire.slnx -c Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Publish executables
+        shell: pwsh
+        run: ./tools/publish.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Extract release notes from CHANGELOG.md
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $lines = Get-Content CHANGELOG.md
+          $start = ($lines | Select-String -Pattern "^## \[$([regex]::Escape($version))\]").LineNumber
+          if (-not $start) {
+            "See CHANGELOG.md for details." | Set-Content notes.md
+          } else {
+            $rest = $lines[$start..($lines.Count - 1)]
+            $end = ($rest | Select-String -Pattern '^## \[').LineNumber | Select-Object -First 1
+            $body = if ($end) { $rest[0..($end - 2)] } else { $rest }
+            $body | Set-Content notes.md
+          }
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $flags = @()
+          if ("${{ steps.version.outputs.prerelease }}" -eq "true") { $flags += "--prerelease" }
+          # For a manual run the tag does not exist yet; --target creates it at the commit that was built.
+          gh release create "${{ steps.version.outputs.tag }}" (Get-ChildItem dist).FullName `
+            --target "${{ github.sha }}" --title "Quire ${{ steps.version.outputs.version }}" --notes-file notes.md @flags

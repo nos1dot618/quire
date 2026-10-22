@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      test-dependencies:
+        patterns: ["xunit*", "Microsoft.NET.Test.Sdk"]
+    ignore:
+      # PDFsharp 6.5 and later are AGPL-licensed; Quire stays on the MIT 6.2 line.
+      - dependency-name: "PDFsharp-MigraDoc-WPF"
+        versions: [">= 6.3.0"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
