@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Release builds override Version from the git tag (see .github/workflows/release.yml). -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Product>Quire</Product>
+    <Authors>Lakshay Chauhan</Authors>
+    <Copyright>Copyright (c) 2026 Lakshay Chauhan</Copyright>
+    <Description>A native, local-first Windows scratchpad of named cells holding mixed content.</Description>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>
