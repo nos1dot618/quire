@@ -1,0 +1,66 @@
+# Run on every commit after `pre-commit install`; build and tests run before each push.
+# Run everything by hand with `pre-commit run --all-files`. CI runs the same checks.
+# The dotnet hooks need the .NET 10 SDK's dotnet on PATH.
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+exclude: ^(docs/SPEC\.md|sample-docs/)
+
+repos:
+  # General file hygiene.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-xml
+        files: \.(xaml|csproj|props|targets|slnx|manifest)$
+        types: [text]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=no]
+
+  # Python tooling (tools/gen_samples.py).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # GitHub Actions workflows.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: local
+    hooks:
+      # Formats C# (whitespace, code style, analyzers) using .editorconfig. Fixes files in place;
+      # the commit stops if anything changed so the fixes can be reviewed and staged.
+      - id: dotnet-format
+        name: dotnet format
+        entry: dotnet format Quire.slnx --include
+        language: system
+        types: [c#]
+        require_serial: true
+
+      - id: dotnet-build
+        name: dotnet build (warnings as errors)
+        entry: dotnet build Quire.slnx -c Release -warnaserror -nologo -v q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: dotnet-test
+        name: dotnet test
+        entry: dotnet test Quire.slnx -c Release -nologo
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
