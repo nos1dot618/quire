@@ -1,0 +1,8 @@
+# Lint and format settings for the Python helper scripts in tools/.
+line-length = 120
+target-version = "py310"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+# Long test-data string literals are fine; the formatter wraps code.
+ignore = ["E501"]
