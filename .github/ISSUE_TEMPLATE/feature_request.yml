@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an improvement to Quire.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Quire is deliberately small and document-centric. Please read the philosophy in the README before proposing large additions.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation and what gets in your way today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help?
+      description: How you imagine it working. Mention the menu, shortcut, or paste/drop behavior you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
