@@ -22,7 +22,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: csharp
           build-mode: manual
@@ -31,4 +31,4 @@ jobs:
       - name: Build
         run: dotnet build Quire.slnx -c Release
 
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
